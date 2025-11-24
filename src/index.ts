@@ -5,7 +5,10 @@ import cors from "cors";
 import { Server } from "socket.io";
 import { createClient } from "@supabase/supabase-js";
 
-const PORT = Number(process.env.PORT || 3001);
+/* ================================
+   基本設定
+================================ */
+const PORT = Number(process.env.PORT || 8080);
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
@@ -13,21 +16,29 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+/* ================================
+   Express + Socket.IO 初期化
+================================ */
 const app = express();
 app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
 app.use(express.json());
 
-app.get("/", (_req, res) => res.send("Monsters Socket Server is running"));
+app.get("/", (_req, res) => {
+  res.send("Monsters Socket Server is running");
+});
 
 const httpServer = http.createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
     origin: CORS_ORIGIN,
-    credentials: true
-  }
+    credentials: true,
+  },
 });
 
+/* ================================
+   認証（Supabase Token 検証）
+================================ */
 io.use(async (socket, next) => {
   try {
     const token =
@@ -37,20 +48,29 @@ io.use(async (socket, next) => {
     if (!token) return next(new Error("No token"));
 
     const { data, error } = await supabase.auth.getUser(token);
+
     if (error || !data.user) return next(new Error("Invalid token"));
 
     (socket as any).user = data.user;
+
     next();
-  } catch {
+  } catch (e) {
     next(new Error("Auth failed"));
   }
 });
 
+/* ================================
+   接続イベント
+================================ */
 io.on("connection", (socket) => {
   const user = (socket as any).user;
+
   console.log("connected:", user.id);
 
+  // すべてのユーザーは feed を購読
   socket.join("feed");
+
+  // 個別チャンネルにも参加
   socket.join(`user:${user.id}`);
 
   socket.on("ping", () => {
@@ -62,11 +82,29 @@ io.on("connection", (socket) => {
   });
 });
 
-app.post("/emit/feed:new-post", (req, res) => {
-  io.to("feed").emit("feed:new-post", req.body);
+/* ================================
+   ★ Supabase → Socket.IO 連携
+   create_post2 から POST される場所
+================================ */
+app.post("/emit", (req, res) => {
+  const { event, payload } = req.body;
+
+  if (!event) {
+    return res.status(400).json({ error: "event required" });
+  }
+
+  console.log("Emit received:", event);
+
+  // すべてのクライアントへ配信
+  io.emit(event, payload);
+
   res.json({ ok: true });
 });
 
+/* ================================
+   サーバー起動
+================================ */
 httpServer.listen(PORT, () => {
-  console.log(`Socket.IO server listening on ${PORT}`);
+  console.log(`Socket.IO server listening on port ${PORT}`);
 });
+
