@@ -73,6 +73,26 @@ io.on("connection", (socket) => {
   // 個別チャンネルにも参加
   socket.join(`user:${user.id}`);
 
+  /* ============================================
+     🔥 リアクション更新（フロント → サーバー）
+  ============================================ */
+  socket.on("feed:update-reaction", (payload) => {
+    console.log("📢 reaction event from client:", payload);
+
+    // feed を見ている全員に配信
+    io.to("feed").emit("feed:update-reaction", payload);
+  });
+
+  /* ============================================
+     🔥 コメント更新（フロント → サーバー）
+  ============================================ */
+  socket.on("feed:update-comment", (payload) => {
+    console.log("📢 comment event from client:", payload);
+
+    // feed を見ている全員に配信
+    io.to("feed").emit("feed:update-comment", payload);
+  });
+
   socket.on("ping", () => {
     socket.emit("pong");
   });
