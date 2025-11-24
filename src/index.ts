@@ -93,9 +93,9 @@ app.post("/emit", (req, res) => {
     return res.status(400).json({ error: "event required" });
   }
 
-  console.log("Emit received:", event);
+  console.log("📢 Emit received:", event, payload);
 
-  // すべてのクライアントへ配信
+  // 指定イベント名で全クライアントへ通知
   io.emit(event, payload);
 
   res.json({ ok: true });
