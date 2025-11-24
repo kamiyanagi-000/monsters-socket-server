@@ -67,35 +67,30 @@ io.on("connection", (socket) => {
 
   console.log("connected:", user.id);
 
-  // すべてのユーザーは feed を購読
   socket.join("feed");
 
-  // 個別チャンネルにも参加
-  socket.join(`user:${user.id}`);
-
-  /* ============================================
-     🔥 リアクション更新（フロント → サーバー）
-  ============================================ */
+  /* ---------------------------
+      🔵 リアクション更新
+  --------------------------- */
   socket.on("feed:update-reaction", (payload) => {
-    console.log("📢 reaction event from client:", payload);
-
-    // feed を見ている全員に配信
+    console.log("📣 reaction received:", payload);
+    // 全クライアントへ転送
     io.to("feed").emit("feed:update-reaction", payload);
   });
 
-  /* ============================================
-     🔥 コメント更新（フロント → サーバー）
-  ============================================ */
+  /* ---------------------------
+      🔵 コメント更新
+  --------------------------- */
   socket.on("feed:update-comment", (payload) => {
-    console.log("📢 comment event from client:", payload);
-
-    // feed を見ている全員に配信
+    console.log("📣 comment received:", payload);
+    // 全クライアントへ転送
     io.to("feed").emit("feed:update-comment", payload);
   });
 
-  socket.on("ping", () => {
-    socket.emit("pong");
-  });
+  /* ---------------------------
+      ping/pong
+  --------------------------- */
+  socket.on("ping", () => socket.emit("pong"));
 
   socket.on("disconnect", () => {
     console.log("disconnected:", user.id);
