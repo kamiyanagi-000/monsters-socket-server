@@ -101,6 +101,14 @@ socket.on("feed:update-post", (payload) => {
   io.to("feed").emit("feed:update-post", payload);
 });
 
+     /* ---------------------------
+      🔵 投稿削除
+  --------------------------- */
+  socket.on("feed:delete-post", (postId: string) => {
+    console.log("📣 post delete received:", postId);
+    io.to("feed").emit("feed:delete-post", postId);
+  });
+
   /* ---------------------------
       ping/pong
   --------------------------- */
