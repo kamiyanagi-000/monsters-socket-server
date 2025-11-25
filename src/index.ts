@@ -70,21 +70,27 @@ io.on("connection", (socket) => {
   socket.join("feed");
 
   /* ---------------------------
-      🔵 リアクション更新
+      🔵 投稿リアクション更新
   --------------------------- */
   socket.on("feed:update-reaction", (payload) => {
     console.log("📣 reaction received:", payload);
-    // 全クライアントへ転送
     io.to("feed").emit("feed:update-reaction", payload);
   });
 
   /* ---------------------------
-      🔵 コメント更新
+      🔵 コメント更新（追加/削除）
   --------------------------- */
   socket.on("feed:update-comment", (payload) => {
     console.log("📣 comment received:", payload);
-    // 全クライアントへ転送
     io.to("feed").emit("feed:update-comment", payload);
+  });
+
+  /* ---------------------------
+      🔵 コメントリアクション更新 
+  --------------------------- */
+  socket.on("feed:update-comment-reaction", (payload) => {
+    console.log("📣 comment reaction received:", payload);
+    io.to("feed").emit("feed:update-comment-reaction", payload);
   });
 
   /* ---------------------------
