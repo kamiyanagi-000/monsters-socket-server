@@ -93,6 +93,14 @@ io.on("connection", (socket) => {
     io.to("feed").emit("feed:update-comment-reaction", payload);
   });
 
+/* ---------------------------
+    🔵 投稿内容更新（編集）
+--------------------------- */
+socket.on("feed:update-post", (payload) => {
+  console.log("📣 post update received:", payload);
+  io.to("feed").emit("feed:update-post", payload);
+});
+
   /* ---------------------------
       ping/pong
   --------------------------- */
