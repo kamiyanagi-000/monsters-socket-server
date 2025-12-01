@@ -119,6 +119,15 @@ io.on("connection", (socket) => {
   });
 
   /* ---------------------------
+   🔁 再同期リクエスト（reconnect 復帰用）
+--------------------------- */
+socket.on("feed:resync-request", () => {
+  console.log("🔁 feed resync request received");
+
+  socket.emit("feed:resync-ack");
+});
+
+  /* ---------------------------
       ping/pong
   --------------------------- */
   socket.on("ping", () => socket.emit("pong"));
