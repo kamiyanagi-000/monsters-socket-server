@@ -65,9 +65,18 @@ io.use(async (socket, next) => {
 io.on("connection", (socket) => {
   const user = (socket as any).user;
 
-  console.log("connected:", user.id);
+  console.log("✅ connected:", user.id);
 
   socket.join("feed");
+  socket.join(`user:${user.id}`);
+
+  /* ---------------------------
+      🔵 reconnect 再同期 要求
+  --------------------------- */
+  socket.on("feed:resync-request", () => {
+    console.log("🔄 feed resync request from:", user.id);
+    socket.emit("feed:resync-ack");
+  });
 
   /* ---------------------------
       🔵 投稿リアクション更新
@@ -78,7 +87,7 @@ io.on("connection", (socket) => {
   });
 
   /* ---------------------------
-      🔵 コメント更新（追加/削除）
+      🔵 コメント更新
   --------------------------- */
   socket.on("feed:update-comment", (payload) => {
     console.log("📣 comment received:", payload);
@@ -93,15 +102,15 @@ io.on("connection", (socket) => {
     io.to("feed").emit("feed:update-comment-reaction", payload);
   });
 
-/* ---------------------------
-    🔵 投稿内容更新（編集）
---------------------------- */
-socket.on("feed:update-post", (payload) => {
-  console.log("📣 post update received:", payload);
-  io.to("feed").emit("feed:update-post", payload);
-});
+  /* ---------------------------
+      🔵 投稿内容更新（編集）
+  --------------------------- */
+  socket.on("feed:update-post", (payload) => {
+    console.log("📣 post update received:", payload);
+    io.to("feed").emit("feed:update-post", payload);
+  });
 
-     /* ---------------------------
+  /* ---------------------------
       🔵 投稿削除
   --------------------------- */
   socket.on("feed:delete-post", (postId: string) => {
@@ -115,13 +124,12 @@ socket.on("feed:update-post", (payload) => {
   socket.on("ping", () => socket.emit("pong"));
 
   socket.on("disconnect", () => {
-    console.log("disconnected:", user.id);
+    console.log("❌ disconnected:", user.id);
   });
 });
 
 /* ================================
    ★ Supabase → Socket.IO 連携
-   create_post2 から POST される場所
 ================================ */
 app.post("/emit", (req, res) => {
   const { event, payload } = req.body;
@@ -132,7 +140,6 @@ app.post("/emit", (req, res) => {
 
   console.log("📢 Emit received:", event, payload);
 
-  // 指定イベント名で全クライアントへ通知
   io.emit(event, payload);
 
   res.json({ ok: true });
@@ -142,6 +149,6 @@ app.post("/emit", (req, res) => {
    サーバー起動
 ================================ */
 httpServer.listen(PORT, () => {
-  console.log(`Socket.IO server listening on port ${PORT}`);
+  console.log(`🚀 Socket.IO server listening on port ${PORT}`);
 });
 
