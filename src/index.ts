@@ -34,6 +34,8 @@ const io = new Server(httpServer, {
     origin: CORS_ORIGIN,
     credentials: true,
   },
+  pingInterval: 25000,
+  pingTimeout: 20000,
 });
 
 /* ================================
@@ -117,15 +119,6 @@ io.on("connection", (socket) => {
     console.log("📣 post delete received:", postId);
     io.to("feed").emit("feed:delete-post", postId);
   });
-
-  /* ---------------------------
-   🔁 再同期リクエスト（reconnect 復帰用）
---------------------------- */
-socket.on("feed:resync-request", () => {
-  console.log("🔁 feed resync request received");
-
-  socket.emit("feed:resync-ack");
-});
 
   /* ---------------------------
       ping/pong
