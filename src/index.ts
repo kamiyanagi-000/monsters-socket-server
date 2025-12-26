@@ -142,6 +142,26 @@ app.post("/emit", (req, res) => {
 
   console.log("📢 Emit received:", event, payload);
 
+  // ============================
+  // 🔵 友達承認（個別通知）
+  // ============================
+  if (event === "friend:accepted") {
+    const { userId, friendId } = payload ?? {};
+
+    if (userId) {
+      io.to(`user:${userId}`).emit("friend:accepted", payload);
+    }
+
+    if (friendId) {
+      io.to(`user:${friendId}`).emit("friend:accepted", payload);
+    }
+
+    return res.json({ ok: true });
+  }
+
+  // ============================
+  // 🔵 それ以外（従来通り）
+  // ============================
   io.emit(event, payload);
 
   res.json({ ok: true });
