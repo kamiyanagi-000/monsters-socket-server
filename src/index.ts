@@ -9,7 +9,12 @@ import { createClient } from "@supabase/supabase-js";
    基本設定
 ================================ */
 const PORT = Number(process.env.PORT || 8080);
-const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
+const CORS_ORIGINS = (
+  process.env.CORS_ORIGIN || "http://localhost:3000"
+)
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY!;
@@ -20,7 +25,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
    Express + Socket.IO 初期化
 ================================ */
 const app = express();
-app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
+app.use(cors({ origin: CORS_ORIGINS, credentials: true }));
 app.use(express.json());
 
 app.get("/", (_req, res) => {
@@ -31,7 +36,7 @@ const httpServer = http.createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: CORS_ORIGIN,
+    origin: CORS_ORIGINS,
     credentials: true,
   },
   pingInterval: 25000,
