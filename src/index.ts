@@ -77,57 +77,85 @@ io.use(async (socket, next) => {
    接続イベント
 ================================ */
 io.on("connection", (socket) => {
-  const user = (socket as any).user;
+  const user = (socket as any).user ?? null;
+  const isAuthenticated = Boolean(user?.id);
 
-  console.log("✅ connected:", user.id);
+  console.log(
+    "✅ connected:",
+    isAuthenticated ? `user:${user.id}` : "guest",
+  );
 
+  // Feedの公開リアルタイム更新はゲストも受信できる
   socket.join("feed");
-  socket.join(`user:${user.id}`);
+
+  // 個人向けroomはログインユーザーだけ
+  if (isAuthenticated) {
+    socket.join(`user:${user.id}`);
+  }
 
   /* ---------------------------
       🔵 reconnect 再同期 要求
   --------------------------- */
   socket.on("feed:resync-request", () => {
-    console.log("🔄 feed resync request from:", user.id);
+    console.log(
+      "🔄 feed resync request from:",
+      isAuthenticated ? user.id : "guest",
+    );
+
     socket.emit("feed:resync-ack");
   });
 
   /* ---------------------------
       🔵 投稿リアクション更新
+      送信はログインユーザーのみ
   --------------------------- */
   socket.on("feed:update-reaction", (payload) => {
+    if (!isAuthenticated) return;
+
     console.log("📣 reaction received:", payload);
     io.to("feed").emit("feed:update-reaction", payload);
   });
 
   /* ---------------------------
       🔵 コメント更新
+      送信はログインユーザーのみ
   --------------------------- */
   socket.on("feed:update-comment", (payload) => {
+    if (!isAuthenticated) return;
+
     console.log("📣 comment received:", payload);
     io.to("feed").emit("feed:update-comment", payload);
   });
 
   /* ---------------------------
-      🔵 コメントリアクション更新 
+      🔵 コメントリアクション更新
+      送信はログインユーザーのみ
   --------------------------- */
   socket.on("feed:update-comment-reaction", (payload) => {
+    if (!isAuthenticated) return;
+
     console.log("📣 comment reaction received:", payload);
     io.to("feed").emit("feed:update-comment-reaction", payload);
   });
 
   /* ---------------------------
       🔵 投稿内容更新（編集）
+      送信はログインユーザーのみ
   --------------------------- */
   socket.on("feed:update-post", (payload) => {
+    if (!isAuthenticated) return;
+
     console.log("📣 post update received:", payload);
     io.to("feed").emit("feed:update-post", payload);
   });
 
   /* ---------------------------
       🔵 投稿削除
+      送信はログインユーザーのみ
   --------------------------- */
   socket.on("feed:delete-post", (postId: string) => {
+    if (!isAuthenticated) return;
+
     console.log("📣 post delete received:", postId);
     io.to("feed").emit("feed:delete-post", postId);
   });
@@ -138,7 +166,10 @@ io.on("connection", (socket) => {
   socket.on("ping", () => socket.emit("pong"));
 
   socket.on("disconnect", () => {
-    console.log("❌ disconnected:", user.id);
+    console.log(
+      "❌ disconnected:",
+      isAuthenticated ? `user:${user.id}` : "guest",
+    );
   });
 });
 
