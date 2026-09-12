@@ -52,16 +52,23 @@ io.use(async (socket, next) => {
       socket.handshake.auth?.token ||
       socket.handshake.headers?.authorization?.replace("Bearer ", "");
 
-    if (!token) return next(new Error("No token"));
+    // 未ログインはゲストとして接続を許可する
+    if (!token) {
+      (socket as any).user = null;
+      return next();
+    }
 
+    // token が送られてきた場合は、これまで通り必ず検証する
     const { data, error } = await supabase.auth.getUser(token);
 
-    if (error || !data.user) return next(new Error("Invalid token"));
+    if (error || !data.user) {
+      return next(new Error("Invalid token"));
+    }
 
     (socket as any).user = data.user;
 
     next();
-  } catch (e) {
+  } catch {
     next(new Error("Auth failed"));
   }
 });
