@@ -183,6 +183,30 @@ io.on("connection", (socket) => {
     },
   );
 
+   
+  /* ---------------------------
+      広告コメント・返信のリアクション更新
+      送信はログインユーザーのみ
+  --------------------------- */
+  socket.on(
+    "ad:update-comment-reaction",
+    (payload: { ad_placement_id?: string }) => {
+      if (!isAuthenticated) return;
+
+      if (
+        !payload ||
+        typeof payload.ad_placement_id !== "string" ||
+        !payload.ad_placement_id
+      ) {
+        return;
+      }
+
+      io.to("feed").emit("ad:update-comment-reaction", {
+        ad_placement_id: payload.ad_placement_id,
+      });
+    },
+  );
+
   /* ---------------------------
       🔵 投稿内容更新（編集）
       送信はログインユーザーのみ
