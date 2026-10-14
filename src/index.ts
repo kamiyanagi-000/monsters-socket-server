@@ -138,6 +138,51 @@ io.on("connection", (socket) => {
     io.to("feed").emit("feed:update-comment-reaction", payload);
   });
 
+   
+  /* ---------------------------
+      広告リアクション更新
+      送信はログインユーザーのみ
+  --------------------------- */
+  socket.on(
+    "ad:update-reaction",
+    (payload: { ad_placement_id?: string }) => {
+      if (!isAuthenticated) return;
+      if (
+        !payload ||
+        typeof payload.ad_placement_id !== "string" ||
+        !payload.ad_placement_id
+      ) {
+        return;
+      }
+
+      io.to("feed").emit("ad:update-reaction", {
+        ad_placement_id: payload.ad_placement_id,
+      });
+    },
+  );
+
+  /* ---------------------------
+      広告コメント更新
+      送信はログインユーザーのみ
+  --------------------------- */
+  socket.on(
+    "ad:update-comment",
+    (payload: { ad_placement_id?: string }) => {
+      if (!isAuthenticated) return;
+      if (
+        !payload ||
+        typeof payload.ad_placement_id !== "string" ||
+        !payload.ad_placement_id
+      ) {
+        return;
+      }
+
+      io.to("feed").emit("ad:update-comment", {
+        ad_placement_id: payload.ad_placement_id,
+      });
+    },
+  );
+
   /* ---------------------------
       🔵 投稿内容更新（編集）
       送信はログインユーザーのみ
